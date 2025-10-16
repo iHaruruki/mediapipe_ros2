@@ -2,10 +2,10 @@
 [![ROS 2 Distro - Humble](https://img.shields.io/badge/ros2-Humble-blue)](https://docs.ros.org/en/humble/)
 
 ## 🛠️ Setup
-### Setup Camera ([Astra Stereo S U3](https://store.orbbec.com/products/astra-stereo-s-u3?srsltid=AfmBOop-7Cnl_FU8fo6iytP43uBmOZTonKg5eosq_w3jRvFCeXtigKCG))
+### Setup Camera ([Astra Pro](https://www.orbbec.com/products/structured-light-camera/astra-series/))
 
 Please follow link  
-[OrbbecSDK_ROS2](https://github.com/orbbec/OrbbecSDK_ROS2/tree/main-legacy?tab=readme-ov-file)
+[ros2_astra_camera](https://github.com/orbbec/ros2_astra_camera.git)
 
 ### Installing dependent packages
 Install python packages
@@ -39,7 +39,7 @@ ros2 launch astra_camera astra_pro.launch.xml
 ```
 ### Run face_mesh_node
 ```bash
-
+ros2 run mediapipe_ros2 face_mesh_node
 ```
 
 ## 👤 Authors
