@@ -45,6 +45,10 @@ ros2 run mediapipe_ros2 face_mesh_node
 ```bash
 ros2 run mediapipe_ros2 holistic_pose_node
 ```
+出力画像を見る / rviz2 
+```bash
+ros2 launch mediapipe_ros2 rviz.launch.py 
+```
 
 ## 👤 Authors
 
