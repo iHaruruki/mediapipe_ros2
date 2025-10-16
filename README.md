@@ -41,6 +41,10 @@ ros2 launch astra_camera astra_pro.launch.xml
 ```bash
 ros2 run mediapipe_ros2 face_mesh_node
 ```
+### Run Holistic node (human pose, face landmarks, hand tracking)
+```bash
+ros2 run mediapipe_ros2 holistic_pose_node
+```
 
 ## 👤 Authors
 

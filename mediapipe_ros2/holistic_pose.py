@@ -15,9 +15,29 @@ from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped
 
 
-class HolisticPoseNode(Node):
+POSE_NAMES = [
+    "nose",
+    "left_eye_inner", "left_eye", "left_eye_outer",
+    "right_eye_inner", "right_eye", "right_eye_outer",
+    "left_ear", "right_ear",
+    "mouth_left", "mouth_right",
+    "left_shoulder", "right_shoulder",
+    "left_elbow", "right_elbow",
+    "left_wrist", "right_wrist",
+    "left_pinky", "right_pinky",
+    "left_index", "right_index",
+    "left_thumb", "right_thumb",
+    "left_hip", "right_hip",
+    "left_knee", "right_knee",
+    "left_ankle", "right_ankle",
+    "left_heel", "right_heel",
+    "left_foot_index", "right_foot_index",
+]
+
+
+class HolisticPoseTFNode(Node):
     def __init__(self):
-        # ★ 要望どおり前回のノード名を維持
+        # ノード名は要求どおりに固定
         super().__init__('facemeshnode')
 
         # ==== CV Bridge ====
@@ -31,22 +51,25 @@ class HolisticPoseNode(Node):
         # ==== Parameters ====
         self.declare_parameter('min_detection_confidence', 0.5)
         self.declare_parameter('min_tracking_confidence', 0.5)
-        self.declare_parameter('model_complexity', 1)           # 0/1/2（精度⇔速度）
-        self.declare_parameter('enable_segmentation', False)     # セグメンテーション不要なら False
+        self.declare_parameter('model_complexity', 1)           # 0/1/2
+        self.declare_parameter('enable_segmentation', False)
 
+        # ROI（任意）
         self.declare_parameter('roi_enabled', False)
         self.declare_parameter('roi_x', 0)
         self.declare_parameter('roi_y', 0)
         self.declare_parameter('roi_width', 400)
         self.declare_parameter('roi_height', 300)
 
+        # Topics / Frames
         self.declare_parameter('color_topic', '/camera/color/image_raw')
         self.declare_parameter('depth_topic', '/camera/depth/image_raw')
         self.declare_parameter('depth_info_topic', '/camera/depth/camera_info')
-        self.declare_parameter('camera_frame', 'camera_depth_optical_frame')
+        self.declare_parameter('camera_frame', 'camera_depth_optical_frame')  # 親フレーム
+        self.declare_parameter('child_prefix', 'mp_pose')         # 子フレームの接頭辞
 
-        # 33点を毎フレームTF配信は重いので既定OFF
-        self.declare_parameter('publish_pose_tf', False)
+        # TF 配信設定（デフォルトON）
+        self.declare_parameter('publish_pose_tf', True)
         self.declare_parameter('tf_rate_hz', 30.0)
 
         # ==== Read params ====
@@ -65,17 +88,19 @@ class HolisticPoseNode(Node):
         self.depth_topic = self.get_parameter('depth_topic').value
         self.depth_info_topic = self.get_parameter('depth_info_topic').value
         self.camera_frame = self.get_parameter('camera_frame').value
+        self.child_prefix = self.get_parameter('child_prefix').value
+
         self.publish_pose_tf = bool(self.get_parameter('publish_pose_tf').value)
         self.tf_rate_hz = float(self.get_parameter('tf_rate_hz').value)
 
-        # ==== MediaPipe Holistic（pose中心。顔/手は使わない）====
+        # ==== MediaPipe Holistic（pose中心）====
         self.holistic = self.mp_holistic.Holistic(
             static_image_mode=False,
             model_complexity=model_complexity,
             smooth_landmarks=True,
             enable_segmentation=enable_seg,
             smooth_segmentation=True,
-            refine_face_landmarks=False,            # 顔精密化はOFF（高速化）
+            refine_face_landmarks=False,
             min_detection_confidence=min_det,
             min_tracking_confidence=min_trk
         )
@@ -88,7 +113,6 @@ class HolisticPoseNode(Node):
 
         # ==== Publishers ====
         self.annotated_pub = self.create_publisher(Image, '/holistic/annotated_image', 10)
-        # [x,y,z_mp, x,y,z_mp, ...] ※zはMediaPipe基準の相対値
         self.pose_landmarks_pub = self.create_publisher(Float32MultiArray, '/holistic/pose_landmarks', 10)
 
         # ==== TF Broadcaster ====
@@ -105,7 +129,7 @@ class HolisticPoseNode(Node):
         )
         ats.registerCallback(self.synced_callback)
 
-        self.get_logger().info('Holistic Pose node ready (pose-only; depth→3D & optional TF available)')
+        self.get_logger().info('Holistic Pose TF node ready: pose 33 pts → 3D → TF配信（デフォルトON）')
 
     # ====================== GUI (ROI) ======================
     def _setup_opencv_window(self):
@@ -164,7 +188,7 @@ class HolisticPoseNode(Node):
             self.get_logger().error(f'depth cv bridge error: {e}')
             return
 
-        annotated_image, pose_lm_flat, roi_ctx = self.process_image(color)
+        annotated_image, pose_lm_flat, _ = self.process_image(color)
 
         # Publish annotated image
         ann = self.bridge.cv2_to_imgmsg(annotated_image, "bgr8")
@@ -174,7 +198,7 @@ class HolisticPoseNode(Node):
         # Publish 2D pose landmarks
         self._publish_array(self.pose_landmarks_pub, pose_lm_flat)
 
-        # 3D projection & TF (optional)
+        # === TF配信（既定ON） ===
         if self.publish_pose_tf and pose_lm_flat:
             fx = depth_info.k[0]; fy = depth_info.k[4]
             cx = depth_info.k[2]; cy = depth_info.k[5]
@@ -183,10 +207,10 @@ class HolisticPoseNode(Node):
             if (now - self.last_tf_time).nanoseconds >= (1e9 / self.tf_rate_hz):
                 self.last_tf_time = now
                 self._broadcast_landmarks_tf(
-                    pose_lm_flat, depth_m, fx, fy, cx, cy, color_msg, prefix='pose'
+                    pose_lm_flat, depth_m, fx, fy, cx, cy, color_msg
                 )
 
-        # ROIウィンドウの表示
+        # ROIウィンドウ
         disp = annotated_image.copy()
         if self.roi_enabled and self.roi_width > 0 and self.roi_height > 0:
             cv2.rectangle(disp, (self.roi_x, self.roi_y),
@@ -227,13 +251,14 @@ class HolisticPoseNode(Node):
             return np.nan
         return float(np.median(vals))
 
-    def _broadcast_landmarks_tf(self, flat_xyz, depth_m, fx, fy, cx, cy, color_msg, prefix='pose'):
-        """Depth（colorに整列済み前提）から各関節の3D位置を算出してTF配信"""
+    def _broadcast_landmarks_tf(self, flat_xyz, depth_m, fx, fy, cx, cy, color_msg):
+        """Depth（colorに整列済み前提）から3Dを出して関節ごとにTF配信。"""
         n = len(flat_xyz) // 3
         for i in range(n):
             u = float(flat_xyz[3*i + 0])
             v = float(flat_xyz[3*i + 1])
 
+            # 画像境界にクリップ
             u_i = int(np.clip(u, 0, depth_m.shape[1]-1))
             v_i = int(np.clip(v, 0, depth_m.shape[0]-1))
             z = self._robust_depth(depth_m, v_i, u_i)  # meters
@@ -241,20 +266,25 @@ class HolisticPoseNode(Node):
             if not np.isfinite(z) or z <= 0.0:
                 continue
 
+            # pinhole back-projection
             X = (u - cx) / fx * z
             Y = (v - cy) / fy * z
+
+            # optical(X右,Y下,Z前) → ROS camera_link(X前,Y左,Z上)
             t = TransformStamped()
             t.header.stamp = color_msg.header.stamp
             t.header.frame_id = self.camera_frame
-            t.child_frame_id = f'{prefix}_{i}'
-            # optical(X右,Y下,Z前)→ROS(X前,Y左,Z上)
-            t.transform.translation.x = float(z)
-            t.transform.translation.y = -float(X)
-            t.transform.translation.z = -float(Y)
+            name = POSE_NAMES[i] if i < len(POSE_NAMES) else f"landmark_{i}"
+            t.child_frame_id = f'{self.child_prefix}/{name}'
+
+            t.transform.translation.x = float(X)
+            t.transform.translation.y = float(Y)
+            t.transform.translation.z = float(z)
             t.transform.rotation.x = 0.0
             t.transform.rotation.y = 0.0
             t.transform.rotation.z = 0.0
             t.transform.rotation.w = 1.0
+
             self.tf_broadcaster.sendTransform(t)
 
     def process_image(self, cv_image):
@@ -302,8 +332,7 @@ class HolisticPoseNode(Node):
         # 2Dランドマーク（x_pix, y_pix, z_mp）
         pose_landmarks = self._extract_pose_landmarks(results, width, height, roi_offset, (roi_x, roi_y, roi_x2, roi_y2))
 
-        roi_ctx = (self.roi_x, self.roi_y, self.roi_width, self.roi_height, self.roi_enabled)
-        return full_annotated, pose_landmarks, roi_ctx
+        return full_annotated, pose_landmarks, (self.roi_x, self.roi_y, self.roi_width, self.roi_height, self.roi_enabled)
 
     def _extract_pose_landmarks(self, results, width, height, roi_offset, roi_bbox):
         landmarks = []
@@ -313,14 +342,14 @@ class HolisticPoseNode(Node):
             for lm in results.pose_landmarks.landmark:
                 x = lm.x * roi_w + roi_offset[0]
                 y = lm.y * roi_h + roi_offset[1]
-                z = lm.z  # MediaPipeの相対Z（参考値）
+                z = lm.z  # MediaPipe相対Z（参考値）
                 landmarks.extend([x, y, z])
         return landmarks
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = HolisticPoseNode()
+    node = HolisticPoseTFNode()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
