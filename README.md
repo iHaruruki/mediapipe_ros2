@@ -32,7 +32,7 @@ $ colcon build --symlink-install --packages-select mediapipe_ros2
 $ source install/setup.bash
 ```
 
-## How to use
+## 🎮 How to use
 ### Launch Camera
 ```bash
 ros2 launch astra_camera astra_pro.launch.xml 
@@ -45,7 +45,7 @@ ros2 run mediapipe_ros2 face_mesh_node
 ```bash
 ros2 run mediapipe_ros2 holistic_pose_node
 ```
-出力画像を見る / rviz2 
+rviz2 
 ```bash
 ros2 launch mediapipe_ros2 rviz.launch.py 
 ```
@@ -56,3 +56,6 @@ ros2 launch mediapipe_ros2 rviz.launch.py
 
 ## 📚 Reference
 [MediaPipe](https://chuoling.github.io/mediapipe/)
+
+## 📜 License
+The source code is licensed MIT. Please see LICENSE.
