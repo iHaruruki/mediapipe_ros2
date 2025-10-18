@@ -4,8 +4,8 @@
   <name>mediapipe_ros2</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="ryo.saegusa@syblab.org">robot</maintainer>
-  <license>Apache-2.0</license>
+  <maintainer email="haruki.isono861@gmail.com">HarukiIsono</maintainer>
+  <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
 
