@@ -5,12 +5,32 @@
 Node & Topic
 ```mermaid
 flowchart LR
-  %% Camera
-  subgraph Camera
-    CIMG(/ /camera/color/image_raw/ <br>(sensor_msgs/Image)/)
-    GIMG(/camera/depth/image_raw/)
-    GINFO(/camera/depth/camera_info/)
+  %% ---------- Input topics ----------
+  subgraph Camera_I_O
+    CIMG["/camera/color/image_raw<br/>(sensor_msgs/Image)"]
+    DIMG["/camera/depth/image_raw<br/>(sensor_msgs/Image)"]
+    DINFO["/camera/depth/camera_info<br/>(sensor_msgs/CameraInfo)"]
   end
+
+  %% ---------- Node ----------
+  NODE["facemeshnode<br/>(HolisticPoseTFNode)"]
+
+  %% ---------- Sync block ----------
+  subgraph Synchronizer
+    ATS["ApproximateTimeSynchronizer<br/>queue=20, slop=0.05s"]
+  end
+
+  CIMG --> ATS
+  DIMG --> ATS
+  DINFO --> ATS
+  ATS --> NODE
+
+  %% ---------- Output topics ----------
+  ANN["/holistic/annotated_image<br/>(sensor_msgs/Image)"]
+  LM["/holistic/pose_landmarks<br/>(std_msgs/Float32MultiArray)"]
+
+  NODE --> ANN
+  NODE --> LM
 ```
 
 ## 🛠️ Setup
