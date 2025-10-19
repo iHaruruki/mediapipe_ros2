@@ -49,8 +49,8 @@ class HolisticPoseTFNode(Node):
         self.mp_holistic = mp.solutions.holistic
 
         # ==== Parameters ====
-        self.declare_parameter('min_detection_confidence', 0.5)
-        self.declare_parameter('min_tracking_confidence', 0.5)
+        self.declare_parameter('min_detection_confidence', 0.6)
+        self.declare_parameter('min_tracking_confidence', 0.6)
         self.declare_parameter('model_complexity', 1)           # 0/1/2
         self.declare_parameter('enable_segmentation', False)
 
