@@ -87,6 +87,8 @@ ros2 run mediapipe_ros2 subscribe_landmark_node
 - **[iHaruruki](https://github.com/iHaruruki)** — Main author & maintainer
 
 ## 📚 Reference
+- [image_pipeline](https://docs.ros.org/en/rolling/p/image_pipeline/camera_info.html)
+- [message_filters](https://docs.ros.org/en/rolling/p/message_filters/doc/index.html)
 - [MediaPipe](https://chuoling.github.io/mediapipe/)
 - [Mermaid](https://mermaid.js.org/)
 
