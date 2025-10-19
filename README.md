@@ -13,7 +13,7 @@ flowchart LR
   end
 
   %% ---------- Node ----------
-  NODE["facemeshnode<br/>(HolisticPoseTFNode)"]
+  NODE["holistic_pose_node<br/>(HolisticPoseTFNode)"]
 
   CIMG --> NODE
   DIMG --> NODE
