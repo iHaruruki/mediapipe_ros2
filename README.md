@@ -29,7 +29,6 @@ flowchart LR
 
 ## 🛠️ Setup
 ### Setup Camera ([Astra Pro](https://www.orbbec.com/products/structured-light-camera/astra-series/))
-
 Please follow link  
 [ros2_astra_camera](https://github.com/orbbec/ros2_astra_camera.git)
 
@@ -63,7 +62,7 @@ source install/setup.bash
 ```bash
 ros2 launch astra_camera astra_pro.launch.xml 
 ```
-### Run face_mesh_node
+### Run face_mesh_node (face landmarks only)
 ```bash
 ros2 run mediapipe_ros2 face_mesh_node
 ```
