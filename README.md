@@ -93,6 +93,15 @@ Mediapipe Face Mesh
 - [468点の3Dランドマーク。基礎解説](https://mediapipe.readthedocs.io/en/latest/solutions/face_mesh.html?utm_source=chatgpt.com)
 - [Face Meshの実務的使い方](https://samproell.io/posts/yarppg/yarppg-face-detection-with-mediapipe/?utm_source=chatgpt.com)
 
+MediaPipe Holistic
+- [MediaPipe](https://chuoling.github.io/mediapipe/)
+- [Holistic Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/holistic_landmarker?utm_source=chatgpt.com)
+- [Holistic のトポロジ・リアルタイム性の解説](https://research.google/blog/mediapipe-holistic-simultaneous-face-hand-and-pose-prediction-on-device/?utm_source=chatgpt.com)
+
+MediaPipe Pose
+- [Pose Landmarker ガイド](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker?utm_source=chatgpt.com)
+
+
 ROS 2 message_filters
 - [message_filters](https://docs.ros.org/en/rolling/p/message_filters/doc/index.html)
 - [ROS 2（rolling）のPythonチュートリアル](https://docs.ros.org/en/rolling/p/message_filters/doc/Tutorials/Approximate-Synchronizer-Python.html?utm_source=chatgpt.com)
@@ -100,6 +109,10 @@ ROS 2 message_filters
 CV Bridge
 - [CvBridge公式チュートリアル](https://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython?utm_source=chatgpt.com)
 - [image_pipeline](https://docs.ros.org/en/rolling/p/image_pipeline/camera_info.html)
+
+tf2_ros / TransformBroadcaster（Python）
+- [Pythonブロードキャスタの実装](https://docs.ros.org/en/foxy/Tutorials/Intermediate/Tf2/Writing-A-Tf2-Broadcaster-Py.html?utm_source=chatgpt.com)
+- [tf2（ROS1）チュートリアル](https://wiki.ros.org/tf2/Tutorials/Writing%20a%20tf2%20broadcaster%20%28Python%29?utm_source=chatgpt.com)
 
 Mermaid
 - [Mermaid公式](https://mermaid.js.org/)
