@@ -6,9 +6,9 @@ Node & Topic
 ```mermaid
 flowchart LR
   subgraph Camera
-    CIMG[/camera/color/image_raw/]
-    GIMG[/camera/depth/image_raw/]
-    GINFO[/camera/depth/camera_info/]
+    CIMG(/camera/color/image_raw/)
+    GIMG(/camera/depth/image_raw/)
+    GINFO(/camera/depth/camera_info/)
   end
 ```
 
