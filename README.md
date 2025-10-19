@@ -1,6 +1,17 @@
 # mediapipe_ros2
 [![ROS 2 Distro - Humble](https://img.shields.io/badge/ros2-Humble-blue)](https://docs.ros.org/en/humble/)
 
+## 📦 Features
+Node & Topic
+```mermaid
+flowchart LR
+  subgraph Camera
+    CIMG([/camera/color/image_raw/])
+    GIMG([/camera/depth/image_raw/])
+    GINFO([/camera/depth/camera_info/])
+  end
+```
+
 ## 🛠️ Setup
 ### Setup Camera ([Astra Pro](https://www.orbbec.com/products/structured-light-camera/astra-series/))
 
@@ -22,14 +33,14 @@ sudo apt install ros-humble-message-filters
 ### Setup mediapipe_ros2 Repositories
 Clone
 ```bash
-$ cd ~/ros2_ws/src
-$ git clone https://github.com/iHaruruki/mediapipe_ros2.git
+cd ~/ros2_ws/src
+git clone https://github.com/iHaruruki/mediapipe_ros2.git
 ```
 Build
 ```bash
-$ cd ~/ros2_ws
-$ colcon build --symlink-install --packages-select mediapipe_ros2
-$ source install/setup.bash
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select mediapipe_ros2
+source install/setup.bash
 ```
 
 ## 🎮 How to use
@@ -56,6 +67,7 @@ ros2 launch mediapipe_ros2 rviz.launch.py
 
 ## 📚 Reference
 - [MediaPipe](https://chuoling.github.io/mediapipe/)
+- [Mermaid](https://mermaid.js.org/)
 
 ## 📜 License
 The source code is licensed MIT. Please see LICENSE.
