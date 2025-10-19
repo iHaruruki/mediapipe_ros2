@@ -7,7 +7,7 @@ Node & Topic
 flowchart LR
   %% Camera
   subgraph Camera
-    CIMG(/`/camera/color/image_raw/`\n(sensor_msgs/Image)/)
+    CIMG(/ /camera/color/image_raw/ <br>(sensor_msgs/Image)/)
     GIMG(/camera/depth/image_raw/)
     GINFO(/camera/depth/camera_info/)
   end
