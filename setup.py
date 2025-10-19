@@ -29,7 +29,8 @@ setup(
     entry_points={
         'console_scripts': [
             'face_mesh_node = mediapipe_ros2.face_mesh_node:main',
-            'holistic_pose_node = mediapipe_ros2.holistic_pose:main'
+            'holistic_pose_node = mediapipe_ros2.holistic_pose:main',
+            'subscribe_landmark_node = mediapipe_ros2.sub_landmark_node:main',
         ],
     },
 )
