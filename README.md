@@ -74,6 +74,13 @@ rviz2
 ```bash
 ros2 launch mediapipe_ros2 rviz.launch.py 
 ```
+Subscribe topic(/holistic/pose_landmarks)
+```bash
+ros2 run mediapipe_ros2 subscribe_landmark_node
+```
+> [!TIP]
+> This is a sample node that subscribes to the `/holistic/pose_landmarks`  
+> 骨格のランドマークを購読するサンプルプログラムです
 
 ## 👤 Authors
 
