@@ -5,7 +5,7 @@
 Node & Topic
 ```mermaid
 flowchart LR
-  % Camera
+  %% Camera
   subgraph Camera
     CIMG(/camera/color/image_raw/)
     GIMG(/camera/depth/image_raw/)
