@@ -87,10 +87,22 @@ ros2 run mediapipe_ros2 subscribe_landmark_node
 - **[iHaruruki](https://github.com/iHaruruki)** — Main author & maintainer
 
 ## 📚 Reference
-- [image_pipeline](https://docs.ros.org/en/rolling/p/image_pipeline/camera_info.html)
-- [message_filters](https://docs.ros.org/en/rolling/p/message_filters/doc/index.html)
+Mediapipe Face Mesh
 - [MediaPipe](https://chuoling.github.io/mediapipe/)
-- [Mermaid](https://mermaid.js.org/)
+- [顔ランドマーク検出ガイド](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker?utm_source=chatgpt.com)
+- [468点の3Dランドマーク。基礎解説](https://mediapipe.readthedocs.io/en/latest/solutions/face_mesh.html?utm_source=chatgpt.com)
+- [Face Meshの実務的使い方](https://samproell.io/posts/yarppg/yarppg-face-detection-with-mediapipe/?utm_source=chatgpt.com)
+
+ROS 2 message_filters
+- [message_filters](https://docs.ros.org/en/rolling/p/message_filters/doc/index.html)
+- [ROS 2（rolling）のPythonチュートリアル](https://docs.ros.org/en/rolling/p/message_filters/doc/Tutorials/Approximate-Synchronizer-Python.html?utm_source=chatgpt.com)
+
+CV Bridge
+- [CvBridge公式チュートリアル](https://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython?utm_source=chatgpt.com)
+- [image_pipeline](https://docs.ros.org/en/rolling/p/image_pipeline/camera_info.html)
+
+Mermaid
+- [Mermaid公式](https://mermaid.js.org/)
 
 ## 📜 License
 The source code is licensed MIT. Please see LICENSE.
