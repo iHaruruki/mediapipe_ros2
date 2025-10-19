@@ -55,7 +55,7 @@ ros2 launch mediapipe_ros2 rviz.launch.py
 - **[iHaruruki](https://github.com/iHaruruki)** — Main author & maintainer
 
 ## 📚 Reference
-[MediaPipe](https://chuoling.github.io/mediapipe/)
+- [MediaPipe](https://chuoling.github.io/mediapipe/)
 
 ## 📜 License
 The source code is licensed MIT. Please see LICENSE.
