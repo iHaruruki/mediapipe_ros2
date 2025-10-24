@@ -16,7 +16,9 @@ flowchart LR
     DINFO["/camera/depth/camera_info<br/>(sensor_msgs/CameraInfo)"]
   end
 
-  CAMERA --> CIMG
+  CARERA --> CIMG
+  CARERA --> DIMG
+  CARERA --> DINFO
 
   %% ---------- Node ----------
   NODE([/holistic_pose_node])
