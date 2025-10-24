@@ -7,7 +7,7 @@ Node & Topic
 flowchart LR
   %% Camera Node
   CARERA([/camera/camera])
-  TF([/tf])
+  TF(/tf)
 
   %% ---------- Input topics ----------
   subgraph Camera Topics
@@ -19,6 +19,7 @@ flowchart LR
   CARERA --> CIMG
   CARERA --> DIMG
   CARERA --> DINFO
+  CARERA --> TF
 
   %% ---------- Node ----------
   NODE([/holistic_pose_node])
@@ -26,10 +27,13 @@ flowchart LR
   CIMG --> NODE
   DIMG --> NODE
   DINFO --> NODE
+  NODE --> TF
 
   %% ---------- Output topics ----------
-  ANN["/holistic/annotated_image<br/>(sensor_msgs/Image)"]
-  LM["/holistic/pose_landmarks<br/>(std_msgs/Float32MultiArray)"]
+  subgraph Holistic Topics
+    ANN["/holistic/annotated_image<br/>(sensor_msgs/Image)<br/>(Landmarkを描き込んだ画像（BGR）)"]
+    LM["/holistic/pose_landmarks<br/>(std_msgs/Float32MultiArray)(2Dランドマーク列)"]
+  end
 
   NODE --> ANN
   NODE --> LM
