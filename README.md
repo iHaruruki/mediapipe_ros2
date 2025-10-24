@@ -81,6 +81,16 @@ ros2 run mediapipe_ros2 face_mesh_node
 ```bash
 ros2 launch mediapipe_ros2 posture.launch.py
 ```
+#### ros2 topic echo / topicが公開しているデータを表示
+```bash
+# ros2 topic echo [topic name]
+ros2 topic echo /holistic/pose_landmarks
+```
+#### Output to csv file / CSVファイルに出力
+```bash
+# ros2 topic echo [topic name] > [file name].csv
+ros2 topic echo /holistic/pose_landmarks > output.csv
+```
 #### Subscribe topic(/holistic/pose_landmarks)
 This is a sample node that subscribes to the `/holistic/pose_landmarks`  
 骨格のランドマークを購読するサンプルプログラムです
