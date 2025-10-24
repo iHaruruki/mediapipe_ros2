@@ -68,9 +68,9 @@ Astra Stereo S U3
 ros2 launch orbbec_camera astra_stereo_u3.launch.py
 ```
 > [!NOTE]
-> If your camera setup in not complete, please refer to the link below.
-> [Astra Pro]()
-> [Astra Stereo S U3]()
+> If your camera setup in not complete, please refer to the link below.  
+> [Astra Pro]()  
+> [Astra Stereo S U3]()  
 
 ### Run face_mesh_node (face landmarks only)
 ```bash
