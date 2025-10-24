@@ -38,7 +38,7 @@ POSE_NAMES = [
 class HolisticPoseTFNode(Node):
     def __init__(self):
         # ノード名は要求どおりに固定
-        super().__init__('facemeshnode')
+        super().__init__('holisticnode')
 
         # ==== CV Bridge ====
         self.bridge = CvBridge()
