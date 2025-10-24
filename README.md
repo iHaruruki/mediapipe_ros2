@@ -58,7 +58,7 @@ source install/setup.bash
 ```
 
 ## 🎮 How to use
-### Launch Camera
+### :camera: Launch Camera
 Astra Pro
 ```bash
 ros2 launch astra_camera astra_pro.launch.xml 
