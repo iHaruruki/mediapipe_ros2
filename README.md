@@ -5,6 +5,10 @@
 Node & Topic
 ```mermaid
 flowchart LR
+  %% Camera Node
+  CARERA([/camera/camera])
+  TF([/tf])
+
   %% ---------- Input topics ----------
   subgraph Camera Topics
     CIMG["/camera/color/image_raw<br/>(sensor_msgs/Image)"]
@@ -12,8 +16,10 @@ flowchart LR
     DINFO["/camera/depth/camera_info<br/>(sensor_msgs/CameraInfo)"]
   end
 
+  CAMERA --> CIMG
+
   %% ---------- Node ----------
-  NODE([holistic_pose_node])
+  NODE([/holistic_pose_node])
 
   CIMG --> NODE
   DIMG --> NODE
