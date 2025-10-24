@@ -59,20 +59,27 @@ source install/setup.bash
 
 ## 🎮 How to use
 ### Launch Camera
+Astra Pro
 ```bash
 ros2 launch astra_camera astra_pro.launch.xml 
 ```
+Astra Stereo S U3
+```bash
+ros2 launch orbbec_camera astra_stereo_u3.launch.py
+```
+> [!NOTE]
+> If your camera setup in not complete, please refer to the link below.
+> [Astra Pro]()
+> [Astra Stereo S U3]()
+
 ### Run face_mesh_node (face landmarks only)
 ```bash
 ros2 run mediapipe_ros2 face_mesh_node
 ```
 ### Run Holistic node (human pose, face landmarks, hand tracking)
+Launch `holistic_pose_node` & `rviz`
 ```bash
-ros2 run mediapipe_ros2 holistic_pose_node
-```
-rviz2 
-```bash
-ros2 launch mediapipe_ros2 rviz.launch.py 
+ros2 launch mediapipe_ros2 posture.launch.py
 ```
 Subscribe topic(/holistic/pose_landmarks)
 ```bash
