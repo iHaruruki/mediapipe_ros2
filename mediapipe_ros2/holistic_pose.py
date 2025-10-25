@@ -71,7 +71,7 @@ class HolisticPoseTFNode(Node):
         self.declare_parameter('tf_rate_hz', 30.0)
 
         # 登録（color↔depth整合）がドライバ側で有効か（aligned前提）。Falseなら警告して最近傍リサイズで暫定対応
-        self.declare_parameter('assume_registered_depth', True)
+        self.declare_parameter('assume_registered_depth', False)
 
         # ==== Read params ====
         min_det = float(self.get_parameter('min_detection_confidence').value)
@@ -131,7 +131,7 @@ class HolisticPoseTFNode(Node):
         ats = message_filters.ApproximateTimeSynchronizer(
             [color_sub, depth_sub, color_info_sub, depth_info_sub],
             queue_size=20,
-            slop=0.03
+            slop=0.05
         )
         ats.registerCallback(self.synced_callback)
 
