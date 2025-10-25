@@ -4,6 +4,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
+from rclpy.qos import QoSPresetProfiles  # Added: QoS presets
 from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Float32MultiArray
 from cv_bridge import CvBridge
@@ -13,8 +14,6 @@ import numpy as np
 import message_filters
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped
-
-# Added: mediapipe_ros2_msgs
 from mediapipe_ros2_msgs.msg import PoseLandmark
 
 
@@ -136,8 +135,6 @@ class HolisticPoseTFNode(Node):
         # ==== Publishers ====
         self.annotated_pub = self.create_publisher(Image, '/holistic/annotated_image', 10)
         self.pose_landmarks_pub = self.create_publisher(Float32MultiArray, '/holistic/pose_landmarks', 10)
-
-        # Added: Landmark2D publisher
         self.lm2d_pub = self.create_publisher(PoseLandmark, self.landmark2d_topic, 10)
 
         # ==== TF Broadcaster ====
@@ -145,10 +142,11 @@ class HolisticPoseTFNode(Node):
         self.last_tf_time = self.get_clock().now()
 
         # ==== Subscribers with synchronization ====
-        color_sub = message_filters.Subscriber(self, Image, self.color_topic, qos_profile=10)
-        color_info_sub = message_filters.Subscriber(self, CameraInfo, self.color_info_topic, qos_profile=10)
-        depth_sub = message_filters.Subscriber(self, Image, self.depth_topic, qos_profile=10)
-        depth_info_sub = message_filters.Subscriber(self, CameraInfo, self.depth_info_topic, qos_profile=10)
+        sensor_qos = QoSPresetProfiles.SENSOR_DATA.value  # Added: QoS preset
+        color_sub = message_filters.Subscriber(self, Image, self.color_topic, qos_profile=sensor_qos)
+        color_info_sub = message_filters.Subscriber(self, CameraInfo, self.color_info_topic, qos_profile=sensor_qos)
+        depth_sub = message_filters.Subscriber(self, Image, self.depth_topic, qos_profile=sensor_qos)
+        depth_info_sub = message_filters.Subscriber(self, CameraInfo, self.depth_info_topic, qos_profile=sensor_qos)
 
         ats = message_filters.ApproximateTimeSynchronizer(
             [color_sub, color_info_sub, depth_sub, depth_info_sub], queue_size=20, slop=0.05
