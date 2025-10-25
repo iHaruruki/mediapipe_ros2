@@ -72,7 +72,7 @@ class HolisticPoseTFNode(Node):
 
         # Landmark2D message publish settings
         self.declare_parameter('publish_landmark2d', True)
-        self.declare_parameter('landmark2d_topic', '/holistic/pose/landmark')
+        #self.declare_parameter('landmark2d_topic', '/holistic/pose/landmark')
 
         # TF 配信設定（デフォルトON）
         self.declare_parameter('publish_pose_tf', True)
@@ -104,7 +104,7 @@ class HolisticPoseTFNode(Node):
         self.child_prefix = self.get_parameter('child_prefix').value
 
         self.publish_landmark2d = bool(self.get_parameter('publish_landmark2d').value)
-        self.landmark2d_topic = self.get_parameter('landmark2d_topic').value
+        #self.landmark2d_topic = self.get_parameter('landmark2d_topic').value
 
         self.publish_pose_tf = bool(self.get_parameter('publish_pose_tf').value)
         self.tf_rate_hz = float(self.get_parameter('tf_rate_hz').value)
@@ -134,8 +134,8 @@ class HolisticPoseTFNode(Node):
 
         # ==== Publishers ====
         self.annotated_pub = self.create_publisher(Image, '/holistic/annotated_image', 10)
-        self.pose_landmarks_pub = self.create_publisher(Float32MultiArray, '/holistic/pose_landmarks', 10)
-        self.lm2d_pub = self.create_publisher(PoseLandmark, self.landmark2d_topic, 10)
+        self.pose_landmarks_pub = self.create_publisher(Float32MultiArray, '/holistic/pose/landmarks', 10)
+        self.lm2d_pub = self.create_publisher(PoseLandmark, '/holistic/pose/landmarks/csv', 10)
 
         # ==== TF Broadcaster ====
         self.tf_broadcaster = TransformBroadcaster(self)
