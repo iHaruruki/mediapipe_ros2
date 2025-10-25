@@ -106,7 +106,7 @@ ros2 topic echo /holistic/pose_landmarks/csv
 ```
 #### Output to csv file / CSVファイルに出力
 ```bash
-# ros2 topic echo [topic name] > [file name].csv
+# ros2 topic echo [topic name] --csv > [file name].csv
 ros2 topic echo /holistic/pose/landmarks/csv --csv > out.csv
 ```
 csv format
