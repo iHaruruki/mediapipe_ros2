@@ -1,30 +1,36 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray
+from rclpy.qos import QoSPresetProfiles
+from mediapipe_ros2_msgs.msg import PoseLandmark  # header, name, index, x, y
 
 
 class LandmarkSubscriber(Node):
     def __init__(self):
-        super().__init__('landmark_subscriber')  # ← クラス初期化でNode名を指定
+        super().__init__('landmark_subscriber')
 
-        # --- Subscriber ---
+        # Parameters
+        self.declare_parameter('topic', '/holistic/pose/landmarks/csv')
+        self.declare_parameter('decimals', 2)
+        self.topic = self.get_parameter('topic').value
+        self.decimals = int(self.get_parameter('decimals').value)
+
+        #qos = QoSPresetProfiles.SENSOR_DATA.value
         self.subscription = self.create_subscription(
-            Float32MultiArray,              # メッセージ型
-            '/holistic/pose_landmarks',     # トピック名
-            self.subscriber_callback,       # コールバック関数
-            10                              # QoS深度
+            PoseLandmark,          # ← PoseLandmark に変更
+            self.topic,
+            self.subscriber_callback,
+            10
         )
-        self.subscription  # prevent unused variable warning
         self.get_logger().info('LandmarkSubscriber node started.')
 
-    def subscriber_callback(self, msg: Float32MultiArray):
-        num = len(msg.data)
-        self.get_logger().info(f'Message length: {num}')
-        for i, value in enumerate(msg.data):
-            self.get_logger().info(f'Landmark {i}: {value:.4f}')
+    def subscriber_callback(self, msg: PoseLandmark):
+        # ランドマーク名と座標のみ表示（プレーン）
+        d = self.decimals
+        print(f"{msg.name},{msg.x:.{d}f},{msg.y:.{d}f}", flush=True)
 
 
 def main(args=None):
@@ -35,7 +41,10 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        node.destroy_node()
+        try:
+            node.destroy_node()
+        except Exception:
+            pass
         rclpy.shutdown()
 
 
