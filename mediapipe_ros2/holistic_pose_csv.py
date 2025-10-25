@@ -142,11 +142,11 @@ class HolisticPoseTFNode(Node):
         self.last_tf_time = self.get_clock().now()
 
         # ==== Subscribers with synchronization ====
-        sensor_qos = QoSPresetProfiles.SENSOR_DATA.value  # Added: QoS preset
-        color_sub = message_filters.Subscriber(self, Image, self.color_topic, qos_profile=sensor_qos)
-        color_info_sub = message_filters.Subscriber(self, CameraInfo, self.color_info_topic, qos_profile=sensor_qos)
-        depth_sub = message_filters.Subscriber(self, Image, self.depth_topic, qos_profile=sensor_qos)
-        depth_info_sub = message_filters.Subscriber(self, CameraInfo, self.depth_info_topic, qos_profile=sensor_qos)
+        #sensor_qos = QoSPresetProfiles.SENSOR_DATA.value  # Added: QoS preset
+        color_sub = message_filters.Subscriber(self, Image, self.color_topic, qos_profile=10)
+        color_info_sub = message_filters.Subscriber(self, CameraInfo, self.color_info_topic, qos_profile=10)
+        depth_sub = message_filters.Subscriber(self, Image, self.depth_topic, qos_profile=10)
+        depth_info_sub = message_filters.Subscriber(self, CameraInfo, self.depth_info_topic, qos_profile=10)
 
         ats = message_filters.ApproximateTimeSynchronizer(
             [color_sub, color_info_sub, depth_sub, depth_info_sub], queue_size=20, slop=0.05
