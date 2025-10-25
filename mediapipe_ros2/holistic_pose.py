@@ -48,10 +48,11 @@ class HolisticPoseTFNode(Node):
         self.mp_holistic = mp.solutions.holistic
 
         # ==== Parameters ====
-        self.declare_parameter('min_detection_confidence', 0.6)
-        self.declare_parameter('min_tracking_confidence', 0.6)
+        self.declare_parameter('min_detection_confidence', 0.8)
+        self.declare_parameter('min_tracking_confidence', 0.7)
         self.declare_parameter('model_complexity', 1)           # 0/1/2
         self.declare_parameter('enable_segmentation', False)
+        self.declare_parameter('visibility_threshold', 0.5)
 
         # ROI（任意）
         self.declare_parameter('roi_enabled', False)
@@ -77,6 +78,7 @@ class HolisticPoseTFNode(Node):
         min_trk = float(self.get_parameter('min_tracking_confidence').value)
         model_complexity = int(self.get_parameter('model_complexity').value)
         enable_seg = bool(self.get_parameter('enable_segmentation').value)
+        self.visibility_threshold = float(self.get_parameter('visibility_threshold').value)
 
         self.roi_enabled = bool(self.get_parameter('roi_enabled').value)
         self.roi_x = int(self.get_parameter('roi_x').value)
@@ -255,18 +257,32 @@ class HolisticPoseTFNode(Node):
 
     def _broadcast_landmarks_tf(self, flat_xyz, depth_m, fx, fy, cx, cy, color_msg):
         """Depth（colorに整列済み前提）から3Dを出して関節ごとにTF配信。"""
+        VIS_TH = self.visibility_threshold
+        h, w = depth_m.shape
         n = len(flat_xyz) // 3
         for i in range(n):
             u = float(flat_xyz[3*i + 0])
             v = float(flat_xyz[3*i + 1])
 
-            # 画像境界にクリップ
-            u_i = int(np.clip(u, 0, depth_m.shape[1]-1))
-            v_i = int(np.clip(v, 0, depth_m.shape[0]-1))
-            z = self._robust_depth(depth_m, v_i, u_i)  # meters
+            if not (0.0 <= u < w and 0.0 <= v < h):
+                continue
 
+            # visibility しきい値チェック
+            if (self.latest_visibility is not None and
+                i < len(self.latest_visibility) and
+                self.latest_visibility[i] < VIS_TH):
+                continue
+
+            u_i = int(u); v_i = int(v)
+
+            # 深度の堅牢化
+            z = self._robust_depth(depth_m, v_i, u_i)  # meters
             if not np.isfinite(z) or z <= 0.0:
                 continue
+
+            # 実用レンジ制限（任意：不要なら外してOK）
+            #if not (0.2 <= z <= 8.0):
+            #    continue
 
             # pinhole back-projection
             X = (u - cx) / fx * z
@@ -337,14 +353,30 @@ class HolisticPoseTFNode(Node):
 
     def _extract_pose_landmarks(self, results, width, height, roi_offset, roi_bbox):
         landmarks = []
-        if results and results.pose_landmarks:
-            roi_w = (roi_bbox[2] - roi_bbox[0])
-            roi_h = (roi_bbox[3] - roi_bbox[1])
+        self.latest_visibility = None
+
+        # ROI size
+        roi_w = (roi_bbox[2] - roi_bbox[0])
+        roi_h = (roi_bbox[3] - roi_bbox[1])
+
+        if results and results.pose_landmarks and results.pose_landmarks.landmark:
+            vis_list = []
             for lm in results.pose_landmarks.landmark:
                 x = lm.x * roi_w + roi_offset[0]
                 y = lm.y * roi_h + roi_offset[1]
-                z = lm.z  # MediaPipe相対Z（参考値）
-                landmarks.extend([x, y, z])
+                z = lm.z
+
+            vis = getattr(lm, 'visibility', 1.0)
+            vis_list.append(float(vis))
+
+            if vis >= self.visibility_threshold:
+                landmarks.extend([x,y,z])
+            else:
+                landmarks.extend([float('nan'), float('nan'), float('nan')])
+
+            self.latest_visibility = vis_list
+        else:
+            pass
         return landmarks
 
 
