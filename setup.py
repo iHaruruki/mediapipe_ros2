@@ -30,6 +30,7 @@ setup(
         'console_scripts': [
             'face_mesh_node = mediapipe_ros2.face_mesh_node:main',
             'holistic_pose_node = mediapipe_ros2.holistic_pose:main',
+            'holistic_pose_csv_node = mediapipe_ros2.holistic_pose_csv:main',
             'subscribe_landmark_node = mediapipe_ros2.sub_landmark_node:main',
         ],
     },
