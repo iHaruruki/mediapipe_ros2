@@ -14,6 +14,7 @@ import message_filters
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped
 
+
 POSE_NAMES = [
     "nose",
     "left_eye_inner", "left_eye", "left_eye_outer",
@@ -33,14 +34,16 @@ POSE_NAMES = [
     "left_foot_index", "right_foot_index",
 ]
 
+
 class HolisticPoseTFNode(Node):
     def __init__(self):
-        super().__init__('holisticnode')
+        # ノード名は要求どおりに固定
+        super().__init__('facemeshnode')
 
         # ==== CV Bridge ====
         self.bridge = CvBridge()
 
-        # ==== MediaPipe (Holistic: pose) ====
+        # ==== MediaPipe (Holistic: pose 全身) ====
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_drawing_styles = mp.solutions.drawing_styles
         self.mp_holistic = mp.solutions.holistic
@@ -48,7 +51,7 @@ class HolisticPoseTFNode(Node):
         # ==== Parameters ====
         self.declare_parameter('min_detection_confidence', 0.6)
         self.declare_parameter('min_tracking_confidence', 0.6)
-        self.declare_parameter('model_complexity', 1)  # 0/1/2
+        self.declare_parameter('model_complexity', 1)           # 0/1/2
         self.declare_parameter('enable_segmentation', False)
 
         # ROI（任意）
@@ -61,17 +64,13 @@ class HolisticPoseTFNode(Node):
         # Topics / Frames
         self.declare_parameter('color_topic', '/camera/color/image_raw')
         self.declare_parameter('depth_topic', '/camera/depth/image_raw')
-        self.declare_parameter('color_info_topic', '/camera/color/camera_info')
         self.declare_parameter('depth_info_topic', '/camera/depth/camera_info')
         self.declare_parameter('camera_frame', 'camera_depth_optical_frame')  # 親フレーム
-        self.declare_parameter('child_prefix', 'landmark')  # 子フレーム接頭辞
+        self.declare_parameter('child_prefix', 'mp_pose')         # 子フレームの接頭辞
 
-        # TF 配信
+        # TF 配信設定（デフォルトON）
         self.declare_parameter('publish_pose_tf', True)
         self.declare_parameter('tf_rate_hz', 30.0)
-
-        # 登録（color↔depth整合）がドライバ側で有効か（aligned前提）。Falseなら警告して最近傍リサイズで暫定対応
-        self.declare_parameter('assume_registered_depth', False)
 
         # ==== Read params ====
         min_det = float(self.get_parameter('min_detection_confidence').value)
@@ -87,15 +86,14 @@ class HolisticPoseTFNode(Node):
 
         self.color_topic = self.get_parameter('color_topic').value
         self.depth_topic = self.get_parameter('depth_topic').value
-        self.color_info_topic = self.get_parameter('color_info_topic').value
         self.depth_info_topic = self.get_parameter('depth_info_topic').value
         self.camera_frame = self.get_parameter('camera_frame').value
         self.child_prefix = self.get_parameter('child_prefix').value
+
         self.publish_pose_tf = bool(self.get_parameter('publish_pose_tf').value)
         self.tf_rate_hz = float(self.get_parameter('tf_rate_hz').value)
-        self.assume_registered_depth = bool(self.get_parameter('assume_registered_depth').value)
 
-        # ==== MediaPipe ====
+        # ==== MediaPipe Holistic（pose中心）====
         self.holistic = self.mp_holistic.Holistic(
             static_image_mode=False,
             model_complexity=model_complexity,
@@ -107,7 +105,7 @@ class HolisticPoseTFNode(Node):
             min_tracking_confidence=min_trk
         )
 
-        # ==== GUI (ROI) ====
+        # ==== ROI GUI ====
         self.dragging = False
         self.start_point = None
         self.end_point = None
@@ -121,21 +119,17 @@ class HolisticPoseTFNode(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.last_tf_time = self.get_clock().now()
 
-        # ==== Subscribers & Synchronization (30ms以内) ====
+        # ==== Subscribers with synchronization (color + depth + depth_info) ====
         color_sub = message_filters.Subscriber(self, Image, self.color_topic, qos_profile=10)
         depth_sub = message_filters.Subscriber(self, Image, self.depth_topic, qos_profile=10)
-        color_info_sub = message_filters.Subscriber(self, CameraInfo, self.color_info_topic, qos_profile=10)
         depth_info_sub = message_filters.Subscriber(self, CameraInfo, self.depth_info_topic, qos_profile=10)
 
-        # 4本まとめて同期（slop=0.03 → 30ms）
         ats = message_filters.ApproximateTimeSynchronizer(
-            [color_sub, depth_sub, color_info_sub, depth_info_sub],
-            queue_size=20,
-            slop=0.05
+            [color_sub, depth_sub, depth_info_sub], queue_size=20, slop=0.05
         )
         ats.registerCallback(self.synced_callback)
 
-        self.get_logger().info('Holistic Pose TF node ready: pose 33 pts → 3D → TF (synced within 30ms)')
+        self.get_logger().info('Holistic Pose TF node ready: pose 33 pts → 3D → TF配信（デフォルトON）')
 
     # ====================== GUI (ROI) ======================
     def _setup_opencv_window(self):
@@ -173,9 +167,7 @@ class HolisticPoseTFNode(Node):
                 self.get_logger().info(f'ROI set: x={self.roi_x}, y={self.roi_y}, w={self.roi_width}, h={self.roi_height}')
 
     # ====================== Core ======================
-    def synced_callback(self, color_msg: Image, depth_msg: Image,
-                        color_info: CameraInfo, depth_info: CameraInfo):
-
+    def synced_callback(self, color_msg: Image, depth_msg: Image, depth_info: CameraInfo):
         # --- color ---
         try:
             color = self.bridge.imgmsg_to_cv2(color_msg, "bgr8")
@@ -191,29 +183,10 @@ class HolisticPoseTFNode(Node):
             elif depth_msg.encoding in ('32FC1',):
                 depth_m = depth.astype(np.float32)
             else:
-                depth_m = depth.astype(np.float32)
+                depth_m = depth.astype(np.float32)  # best-effort
         except Exception as e:
             self.get_logger().error(f'depth cv bridge error: {e}')
             return
-
-        # --- ピクセル合わせ（サイズ/画角が既に一致＝登録済み前提） ---
-        ch, cw = color.shape[:2]
-        dh, dw = depth_m.shape[:2]
-        if (dh != ch) or (dw != cw):
-            if self.assume_registered_depth:
-                # 画角一致想定：最近傍でサイズのみ一致（最小コスト）
-                self.get_logger().warn(
-                    f'Depth size {dw}x{dh} != Color size {cw}x{ch}; resizing depth to color (nearest). '
-                    f'For best results, enable driver-aligned depth or use depth_image_proc/register.'
-                )
-                depth_m = cv2.resize(depth_m, (cw, ch), interpolation=cv2.INTER_NEAREST)
-            else:
-                # 未登録のままでは厳密整合不可
-                self.get_logger().error(
-                    'Depth is not registered to color (FOV/サイズが不一致)。'
-                    'カメラ側の aligned_depth_to_color を有効にするか depth_image_proc/register を使用してください。'
-                )
-                return  # 中断
 
         annotated_image, pose_lm_flat, _ = self.process_image(color)
 
@@ -225,10 +198,11 @@ class HolisticPoseTFNode(Node):
         # Publish 2D pose landmarks
         self._publish_array(self.pose_landmarks_pub, pose_lm_flat)
 
-        # === TF配信 ===
+        # === TF配信（既定ON） ===
         if self.publish_pose_tf and pose_lm_flat:
             fx = depth_info.k[0]; fy = depth_info.k[4]
             cx = depth_info.k[2]; cy = depth_info.k[5]
+
             now = self.get_clock().now()
             if (now - self.last_tf_time).nanoseconds >= (1e9 / self.tf_rate_hz):
                 self.last_tf_time = now
@@ -251,6 +225,7 @@ class HolisticPoseTFNode(Node):
 
         cv2.putText(disp, 'Drag to select ROI  (q: close / r: reset ROI)', (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        cv2.imshow('Holistic Pose - ROI Selection', disp)
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             cv2.destroyAllWindows()
@@ -277,7 +252,7 @@ class HolisticPoseTFNode(Node):
         return float(np.median(vals))
 
     def _broadcast_landmarks_tf(self, flat_xyz, depth_m, fx, fy, cx, cy, color_msg):
-        """Depth（colorへ整列済みの深度画像）から3Dを出してTF配信。"""
+        """Depth（colorに整列済み前提）から3Dを出して関節ごとにTF配信。"""
         n = len(flat_xyz) // 3
         for i in range(n):
             u = float(flat_xyz[3*i + 0])
@@ -291,10 +266,11 @@ class HolisticPoseTFNode(Node):
             if not np.isfinite(z) or z <= 0.0:
                 continue
 
-            # pinhole back-projection（depth intrinsics）
+            # pinhole back-projection
             X = (u - cx) / fx * z
             Y = (v - cy) / fy * z
 
+            # optical(X右,Y下,Z前) → ROS camera_link(X前,Y左,Z上)
             t = TransformStamped()
             t.header.stamp = color_msg.header.stamp
             t.header.frame_id = self.camera_frame
@@ -370,6 +346,7 @@ class HolisticPoseTFNode(Node):
                 landmarks.extend([x, y, z])
         return landmarks
 
+
 def main(args=None):
     rclpy.init(args=args)
     node = HolisticPoseTFNode()
@@ -381,6 +358,7 @@ def main(args=None):
         cv2.destroyAllWindows()
         node.destroy_node()
         rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
