@@ -96,12 +96,17 @@ ros2 launch mediapipe_ros2 posture.launch.py
 #### ros2 topic echo / topicが公開しているデータを表示
 ```bash
 # ros2 topic echo [topic name]
-ros2 topic echo /holistic/pose_landmarks
+ros2 topic echo /holistic/pose_landmarks/csv
 ```
 #### Output to csv file / CSVファイルに出力
 ```bash
 # ros2 topic echo [topic name] > [file name].csv
-ros2 topic echo /holistic/pose_landmarks > output.csv
+ros2 topic echo /holistic/pose/landmarks/csv --csv > out.csv
+```
+csv format
+```csv
+stamp_sec,stamp_nanosec,frame_id,landmark_name,index,x_px,y_px
+ROS Header.stamp.sec（秒）,ROS Header.stamp.nanosec（ナノ秒）,ROS Header.frame_id（座標系。例: camera_color_optical_frame）,ランドマーク名（例: left_thumb, right_ankle）,ランドマークのインデックス（MediaPipe Poseの0..32）,画像のフル座標系におけるピクセルx（左→右）,画像のフル座標系におけるピクセルy（上→下）
 ```
 #### Subscribe topic(/holistic/pose_landmarks)
 This is a sample node that subscribes to the `/holistic/pose_landmarks`  
