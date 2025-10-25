@@ -37,8 +37,7 @@ POSE_NAMES = [
 
 class HolisticPoseTFNode(Node):
     def __init__(self):
-        # ノード名は要求どおりに固定
-        super().__init__('facemeshnode')
+        super().__init__('holistic_node')
 
         # ==== CV Bridge ====
         self.bridge = CvBridge()
@@ -49,8 +48,8 @@ class HolisticPoseTFNode(Node):
         self.mp_holistic = mp.solutions.holistic
 
         # ==== Parameters ====
-        self.declare_parameter('min_detection_confidence', 0.6)
-        self.declare_parameter('min_tracking_confidence', 0.6)
+        self.declare_parameter('min_detection_confidence', 0.8)
+        self.declare_parameter('min_tracking_confidence', 0.8)
         self.declare_parameter('model_complexity', 1)           # 0/1/2
         self.declare_parameter('enable_segmentation', False)
 
