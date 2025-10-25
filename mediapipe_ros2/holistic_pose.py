@@ -63,10 +63,11 @@ class HolisticPoseTFNode(Node):
 
         # Topics / Frames
         self.declare_parameter('color_topic', '/camera/color/image_raw')
+        self.declare_parameter('color_info_topic', '/camera/color/camera_info')
         self.declare_parameter('depth_topic', '/camera/depth/image_raw')
         self.declare_parameter('depth_info_topic', '/camera/depth/camera_info')
         self.declare_parameter('camera_frame', 'camera_depth_optical_frame')  # 親フレーム
-        self.declare_parameter('child_prefix', 'mp_pose')         # 子フレームの接頭辞
+        self.declare_parameter('child_prefix', 'landmark')         # 子フレームの接頭辞
 
         # TF 配信設定（デフォルトON）
         self.declare_parameter('publish_pose_tf', True)
@@ -85,6 +86,7 @@ class HolisticPoseTFNode(Node):
         self.roi_height = int(self.get_parameter('roi_height').value)
 
         self.color_topic = self.get_parameter('color_topic').value
+        self.color_info_topic = self.get_parameter('color_info_topic').value
         self.depth_topic = self.get_parameter('depth_topic').value
         self.depth_info_topic = self.get_parameter('depth_info_topic').value
         self.camera_frame = self.get_parameter('camera_frame').value
@@ -119,17 +121,18 @@ class HolisticPoseTFNode(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.last_tf_time = self.get_clock().now()
 
-        # ==== Subscribers with synchronization (color + depth + depth_info) ====
+        # ==== Subscribers with synchronization ====
         color_sub = message_filters.Subscriber(self, Image, self.color_topic, qos_profile=10)
+        color_info_sub = message_filters.Subscriber(self, CameraInfo, self.color_info_topic, qos_profile=10)
         depth_sub = message_filters.Subscriber(self, Image, self.depth_topic, qos_profile=10)
         depth_info_sub = message_filters.Subscriber(self, CameraInfo, self.depth_info_topic, qos_profile=10)
 
         ats = message_filters.ApproximateTimeSynchronizer(
-            [color_sub, depth_sub, depth_info_sub], queue_size=20, slop=0.05
+            [color_sub, color_info_sub, depth_sub, depth_info_sub], queue_size=20, slop=0.05
         )
         ats.registerCallback(self.synced_callback)
 
-        self.get_logger().info('Holistic Pose TF node ready: pose 33 pts → 3D → TF配信（デフォルトON）')
+        self.get_logger().info('Holistic Pose TF node ready')
 
     # ====================== GUI (ROI) ======================
     def _setup_opencv_window(self):
@@ -167,7 +170,7 @@ class HolisticPoseTFNode(Node):
                 self.get_logger().info(f'ROI set: x={self.roi_x}, y={self.roi_y}, w={self.roi_width}, h={self.roi_height}')
 
     # ====================== Core ======================
-    def synced_callback(self, color_msg: Image, depth_msg: Image, depth_info: CameraInfo):
+    def synced_callback(self, color_msg: Image, color_info: CameraInfo, depth_msg: Image, depth_info: CameraInfo):
         # --- color ---
         try:
             color = self.bridge.imgmsg_to_cv2(color_msg, "bgr8")
