@@ -37,7 +37,6 @@ POSE_NAMES = [
 
 class HolisticPoseTFNode(Node):
     def __init__(self):
-        # ノード名は要求どおりに固定
         super().__init__('holistic_pose_node')
 
         # ==== CV Bridge ====
