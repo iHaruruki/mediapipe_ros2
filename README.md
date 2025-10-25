@@ -33,10 +33,12 @@ flowchart LR
   subgraph Holistic Topics
     ANN["/holistic/annotated_image<br/>(sensor_msgs/Image)<br/>(Landmarkを描き込んだ画像（BGR）)"]
     LM["/holistic/pose_landmarks<br/>(std_msgs/Float32MultiArray)(2Dランドマーク列)"]
+    CSV["/holistic/pose/landmarks/csv<br/>(mediapipe_ros2_msgs/PoseLandmark)(CSV用ランドマーク列)"]
   end
 
   NODE --> ANN
   NODE --> LM
+  NODE --> CSV
 ```
 
 ## 🛠️ Setup
