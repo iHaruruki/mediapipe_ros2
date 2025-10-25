@@ -110,7 +110,7 @@ ros2 topic echo /holistic/pose_landmarks/csv
 ros2 topic echo /holistic/pose/landmarks/csv --csv > out.csv
 ```
 csv format
-```csv
+```
 stamp_sec,stamp_nanosec,frame_id,landmark_name,index,x_px,y_px
 ```
 | stamp_sec | stamp_nanosec | frame_id | landmark_name | index | x_px | y_px |
