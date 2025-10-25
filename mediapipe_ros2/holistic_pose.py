@@ -38,7 +38,7 @@ POSE_NAMES = [
 class HolisticPoseTFNode(Node):
     def __init__(self):
         # ノード名は要求どおりに固定
-        super().__init__('facemeshnode')
+        super().__init__('holistic_pose_node')
 
         # ==== CV Bridge ====
         self.bridge = CvBridge()
@@ -273,7 +273,6 @@ class HolisticPoseTFNode(Node):
             X = (u - cx) / fx * z
             Y = (v - cy) / fy * z
 
-            # optical(X右,Y下,Z前) → ROS camera_link(X前,Y左,Z上)
             t = TransformStamped()
             t.header.stamp = color_msg.header.stamp
             t.header.frame_id = self.camera_frame
