@@ -47,24 +47,32 @@ Please follow link
 [ros2_astra_camera](https://github.com/orbbec/ros2_astra_camera.git)
 
 ### Installing dependent packages
-Install python packages
+#### Install python packages
 ```bash
 pip3 install -U "numpy==1.26.4" "opencv-python==4.10.0.84"
 pip3 install opencv-python mediapipe
 ```
-Install ros packages
+#### Install ros packages
 ```bash
 sudo apt install ros-humble-cv-bridge
 sudo apt install ros-humble-image-transport
 sudo apt install ros-humble-message-filters
 ```
 ### Setup mediapipe_ros2 Repositories
-Clone
+#### Clone
 ```bash
 cd ~/ros2_ws/src
 git clone https://github.com/iHaruruki/mediapipe_ros2.git
+git clone https://github.com/iHaruruki/mediapipe_ros2_msgs.git
 ```
-Build
+#### Build
+First, build the message definition package.
+```bash
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select mediapipe_ros2_msgs
+source install/setup.bash
+```
+Second, build the `mediapipe_ros2` package.
 ```bash
 cd ~/ros2_ws
 colcon build --symlink-install --packages-select mediapipe_ros2
@@ -86,10 +94,6 @@ ros2 launch orbbec_camera astra_stereo_u3.launch.py
 > [Astra Pro](https://github.com/iHaruruki/ros2_astra_camera.git)  
 > [Astra Stereo S U3](https://github.com/iHaruruki/OrbbecSDK_ROS2.git)  
 
-### Run face_mesh_node (face landmarks only)
-```bash
-ros2 run mediapipe_ros2 face_mesh_node
-```
 ### Run Holistic node (human pose, face landmarks, hand tracking)
 #### Launch `holistic_pose_node` & `rviz`
 ```bash
