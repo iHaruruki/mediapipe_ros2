@@ -117,6 +117,29 @@ stamp_sec,stamp_nanosec,frame_id,landmark_name,index,x_px,y_px
 | --- | --- | --- | --- | --- | --- | --- |
 | ROS Header.stamp.sec（秒）| ROS Header.stamp.nanosec（ナノ秒）| ROS Header.frame_id（座標系。例: camera_color_optical_frame）| ランドマーク名（例: left_thumb, right_ankle）| ランドマークのインデックス（MediaPipe Poseの0..32）| 画像のフル座標系におけるピクセルx（左→右）| 画像のフル座標系におけるピクセルy（上→下）|
 
+### ROS 2 package create / ROS 2 パッケージ作成の方法
+`/holistic/pose/landmarks/csv` topicをsubscribeして表示するパッケージを作成する
+
+#### Create a package
+```bash
+cd ~/ros2_ws/src
+```
+```bash
+# ros2 pkg create --build-type ament_cmake <package_name>
+ros2 pkg create --build-type ament_cmake mediapipe_pkg
+```
+#### Build a package
+```bash
+cd ~/ros2_ws
+```
+```bash
+colcon build --packages-select mediapipe_pkg
+```
+#### Source the setup
+```bash
+source install/local_setup.bash
+```
+
 ## 👤 Authors
 
 - **[iHaruruki](https://github.com/iHaruruki)** — Main author & maintainer
