@@ -143,6 +143,9 @@ class HolisticPoseTFNode(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.last_tf_time = self.get_clock().now()
 
+        self._first_publish_done = False
+        self._publish_count = 0
+
         # ==== Subscribers with synchronization ====
         #sensor_qos = QoSPresetProfiles.SENSOR_DATA.value  # Added: QoS preset
         color_sub = message_filters.Subscriber(self, Image, self.color_topic, qos_profile=10)
