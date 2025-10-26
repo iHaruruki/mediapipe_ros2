@@ -15,6 +15,7 @@ import message_filters
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped
 from mediapipe_ros2_msgs.msg import PoseLandmark
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 
 POSE_NAMES = [
@@ -136,7 +137,13 @@ class HolisticPoseTFNode(Node):
         # ==== Publishers ====
         self.annotated_pub = self.create_publisher(Image, '/holistic/annotated_image', 10)
         self.pose_landmarks_pub = self.create_publisher(Float32MultiArray, '/holistic/pose/landmarks', 10)
-        self.lm2d_pub = self.create_publisher(PoseLandmark, '/holistic/pose/landmarks/csv', 10)
+        # CSVトピック用に信頼性の高いQoSを設定
+        csv_qos = QoSProfile(
+            reliability=QoSReliabilityPolicy.RELIABLE,  # 確実な配信
+            history=QoSHistoryPolicy.KEEP_ALL,  # すべてのメッセージを保持
+            depth=1000  # バッファサイズを大きく
+        )
+        self.lm2d_pub = self.create_publisher(PoseLandmark, '/holistic/pose/landmarks/csv', 10, qos_profile=csv_qos)
 
         # ==== TF Broadcaster ====
         self.tf_broadcaster = TransformBroadcaster(self)
@@ -226,20 +233,39 @@ class HolisticPoseTFNode(Node):
 
         # Added: Publish Landmark2D messages (per landmark)
         if self.publish_landmark2d:
-            # pose_lm_flatが常に99要素（33×3）であることを確認
-            self.get_logger().debug(f"Publishing Landmark2D messages, pose_lm_flat length: {len(pose_lm_flat)}")
+            # pose_lm_flatが99要素（33×3）であることを確認
+            expected_length = NUM_LANDMARKS * 3
+            if len(pose_lm_flat) != expected_length:
+                self.get_logger().error(
+                    f'pose_lm_flat length mismatch: got {len(pose_lm_flat)}, expected {expected_length}'
+                )
+                # 不足分をNaNで埋める
+                while len(pose_lm_flat) < expected_length:
+                    pose_lm_flat.append(float('nan'))
+            
+            # デバッグ: 最初のフレームでログ出力
+            if not hasattr(self, '_first_publish_done'):
+                self.get_logger().info(f'Publishing {NUM_LANDMARKS} landmarks per frame')
+                self._first_publish_done = True
 
             for landmark_id in range(NUM_LANDMARKS):
                 base = 3 * landmark_id
-                x_val = float(pose_lm_flat[base + 0]) if base + 0 < len(pose_lm_flat) else float('nan')
-                y_val = float(pose_lm_flat[base + 1]) if base + 1 < len(pose_lm_flat) else float('nan')
+                x = float(pose_lm_flat[base + 0]) 
+                y = float(pose_lm_flat[base + 1]) 
+
                 msg = PoseLandmark()
                 msg.header = color_msg.header
+                msg.header.stamp = color_msg.header.stamp
                 msg.name = POSE_NAMES[landmark_id] if landmark_id < len(POSE_NAMES) else f"landmark_{landmark_id}"
                 msg.index = landmark_id
-                msg.x = x_val
-                msg.y = y_val
-                self.lm2d_pub.publish(msg)
+                msg.x = float(x) if np.isfinite(x) else float('nan')
+                msg.y = float(y) if np.isfinite(y) else float('nan')
+
+                # 必ずpublish（エラーハンドリング付き）
+                try:
+                    self.lm2d_pub.publish(msg)
+                except Exception as e:
+                    self.get_logger().error(f'Failed to publish landmark {landmark_id}: {e}')
 
         # === TF配信（既定ON） ===
         if self.publish_pose_tf and pose_lm_flat:
