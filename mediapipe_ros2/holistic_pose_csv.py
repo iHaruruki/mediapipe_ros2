@@ -35,6 +35,7 @@ POSE_NAMES = [
     "left_heel", "right_heel",
     "left_foot_index", "right_foot_index",
 ]
+NUM_LANDMARKS = len(POSE_NAMES)  # = 33
 
 
 class HolisticPoseTFNode(Node):
@@ -338,7 +339,10 @@ class HolisticPoseTFNode(Node):
             self.tf_broadcaster.sendTransform(t)
 
     def process_image(self, cv_image):
-        """Holisticで全身ポーズのみ処理。描画＋(x,y,z)+vis/pres配列を返す。"""
+        """Holisticで全身ポーズのみ処理。描画＋(x,y,z)+vis/pres配列を返す。
+        - 常に33ランドマーク分を返却
+        - 未検出ランドマークは (x, y, z) = (NaN, NaN, NaN), vis=0.0, pres=0.0
+        """
         height, width = cv_image.shape[:2]
 
         # ROI crop
@@ -387,21 +391,30 @@ class HolisticPoseTFNode(Node):
         return full_annotated, (pose_landmarks, vis_list, pres_list), (self.roi_x, self.roi_y, self.roi_width, self.roi_height, self.roi_enabled)
 
     def _extract_pose_landmarks(self, results, width, height, roi_offset, roi_bbox):
-        """(x,y,z)のフラット配列と visibility/presence を返す。"""
-        xyz_flat = []
-        vis_list = []
-        pres_list = []
+        """固定長33の (x,y,z) フラット配列と visibility/presence を返す。
+        - 未検出は (NaN, NaN, NaN) とし、visibility/presence は 0.0
+        """
+        # 事前に固定長を NaN/0.0 で初期化
+        xyz_flat = [float('nan')] * (NUM_LANDMARKS * 3)
+        vis_list = [0.0] * NUM_LANDMARKS
+        pres_list = [0.0] * NUM_LANDMARKS
 
         if results and results.pose_landmarks:
             roi_w = (roi_bbox[2] - roi_bbox[0])
             roi_h = (roi_bbox[3] - roi_bbox[1])
-            for lm in results.pose_landmarks.landmark:
+            lm_list = results.pose_landmarks.landmark
+            for i in range(min(NUM_LANDMARKS, len(lm_list))):
+                lm = lm_list[i]
                 x = lm.x * roi_w + roi_offset[0]
                 y = lm.y * roi_h + roi_offset[1]
                 z = lm.z  # MediaPipe相対Z（参考値）
-                xyz_flat.extend([x, y, z])
-                vis_list.append(float(getattr(lm, 'visibility', 0.0)))
-                pres_list.append(float(getattr(lm, 'presence',  0.0)))
+
+                base = 3 * i
+                xyz_flat[base + 0] = float(x)
+                xyz_flat[base + 1] = float(y)
+                xyz_flat[base + 2] = float(z)
+                vis_list[i] = float(getattr(lm, 'visibility', 0.0))
+                pres_list[i] = float(getattr(lm, 'presence',  0.0))
 
         return xyz_flat, vis_list, pres_list
 
