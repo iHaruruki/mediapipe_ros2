@@ -225,15 +225,15 @@ class HolisticPoseTFNode(Node):
         self._publish_array(self.pose_landmarks_pub, pose_lm_flat)
 
         # Added: Publish Landmark2D messages (per landmark)
-        if self.publish_landmark2d and pose_lm_flat:
-            n = len(pose_lm_flat) // 3
-            for i in range(n):
-                x = float(pose_lm_flat[3*i + 0])
-                y = float(pose_lm_flat[3*i + 1])
+        if self.publish_landmark2d:
+            for landmark_id in range(NUM_LANDMARKS):
+                base = 3 * landmark_id
+                x = float(pose_lm_flat[base + 0]) if base + 0 < len(pose_lm_flat) else float('nan')
+                y = float(pose_lm_flat[base + 1]) if base + 1 < len(pose_lm_flat) else float('nan')
                 msg = PoseLandmark()
                 msg.header = color_msg.header  # color基準（フル画像座標）
-                msg.name = POSE_NAMES[i] if i < len(POSE_NAMES) else f"landmark_{i}"
-                msg.index = i
+                msg.name = POSE_NAMES[landmark_id] if landmark_id < len(POSE_NAMES) else f"landmark_{landmark_id}"
+                msg.index = landmark_id
                 msg.x = x
                 msg.y = y
                 self.lm2d_pub.publish(msg)
