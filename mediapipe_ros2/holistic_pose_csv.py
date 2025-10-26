@@ -137,13 +137,7 @@ class HolisticPoseTFNode(Node):
         # ==== Publishers ====
         self.annotated_pub = self.create_publisher(Image, '/holistic/annotated_image', 10)
         self.pose_landmarks_pub = self.create_publisher(Float32MultiArray, '/holistic/pose/landmarks', 10)
-        # CSVトピック用に信頼性の高いQoSを設定
-        csv_qos = QoSProfile(
-            reliability=QoSReliabilityPolicy.RELIABLE,  # 確実な配信
-            history=QoSHistoryPolicy.KEEP_ALL,  # すべてのメッセージを保持
-            depth=1000  # バッファサイズを大きく
-        )
-        self.lm2d_pub = self.create_publisher(PoseLandmark, '/holistic/pose/landmarks/csv', 10, qos_profile=csv_qos)
+        self.lm2d_pub = self.create_publisher(PoseLandmark, '/holistic/pose/landmarks/csv', 10)
 
         # ==== TF Broadcaster ====
         self.tf_broadcaster = TransformBroadcaster(self)
@@ -248,24 +242,35 @@ class HolisticPoseTFNode(Node):
                 self.get_logger().info(f'Publishing {NUM_LANDMARKS} landmarks per frame')
                 self._first_publish_done = True
 
+            # 必ず0から32まで順番に33個すべてをpublish
             for landmark_id in range(NUM_LANDMARKS):
                 base = 3 * landmark_id
-                x = float(pose_lm_flat[base + 0]) 
-                y = float(pose_lm_flat[base + 1]) 
-
+                x = pose_lm_flat[base + 0]
+                y = pose_lm_flat[base + 1]
+                
                 msg = PoseLandmark()
                 msg.header = color_msg.header
-                msg.header.stamp = color_msg.header.stamp
                 msg.name = POSE_NAMES[landmark_id] if landmark_id < len(POSE_NAMES) else f"landmark_{landmark_id}"
                 msg.index = landmark_id
-                msg.x = float(x) if np.isfinite(x) else float('nan')
-                msg.y = float(y) if np.isfinite(y) else float('nan')
-
-                # 必ずpublish（エラーハンドリング付き）
-                try:
-                    self.lm2d_pub.publish(msg)
-                except Exception as e:
-                    self.get_logger().error(f'Failed to publish landmark {landmark_id}: {e}')
+                
+                # NaNを適切に処理
+                if np.isfinite(x):
+                    msg.x = float(x)
+                else:
+                    msg.x = float('nan')
+                
+                if np.isfinite(y):
+                    msg.y = float(y)
+                else:
+                    msg.y = float('nan')
+                
+                # publish
+                self.lm2d_pub.publish(msg)
+            
+            # カウント更新（デバッグ用）
+            self._publish_count += 1
+            if self._publish_count % 30 == 0:  # 30フレームごとにログ
+                self.get_logger().info(f'Published {self._publish_count} frames ({self._publish_count * 33} messages)')
 
         # === TF配信（既定ON） ===
         if self.publish_pose_tf and pose_lm_flat:
