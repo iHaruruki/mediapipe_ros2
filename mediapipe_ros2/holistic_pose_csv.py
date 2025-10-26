@@ -294,9 +294,6 @@ class HolisticPoseTFNode(Node):
 
     def _broadcast_landmarks_tf(self, flat_xyz, vis_list, pres_list,
                                 depth_m, fx, fy, cx, cy, color_msg):
-        """
-        visibility/presenceが低い・画面外・深度無効のランドマークは TF を送らない。
-        """
         H, W = depth_m.shape
         n = len(flat_xyz) // 3
 
@@ -339,10 +336,6 @@ class HolisticPoseTFNode(Node):
             self.tf_broadcaster.sendTransform(t)
 
     def process_image(self, cv_image):
-        """Holisticで全身ポーズのみ処理。描画＋(x,y,z)+vis/pres配列を返す。
-        - 常に33ランドマーク分を返却
-        - 未検出ランドマークは (x, y, z) = (NaN, NaN, NaN), vis=0.0, pres=0.0
-        """
         height, width = cv_image.shape[:2]
 
         # ROI crop
@@ -391,9 +384,6 @@ class HolisticPoseTFNode(Node):
         return full_annotated, (pose_landmarks, vis_list, pres_list), (self.roi_x, self.roi_y, self.roi_width, self.roi_height, self.roi_enabled)
 
     def _extract_pose_landmarks(self, results, width, height, roi_offset, roi_bbox):
-        """固定長33の (x,y,z) フラット配列と visibility/presence を返す。
-        - 未検出は (NaN, NaN, NaN) とし、visibility/presence は 0.0
-        """
         # 事前に固定長を NaN/0.0 で初期化
         xyz_flat = [float('nan')] * (NUM_LANDMARKS * 3)
         vis_list = [0.0] * NUM_LANDMARKS
