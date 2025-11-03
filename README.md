@@ -33,10 +33,12 @@ flowchart LR
   subgraph Holistic Topics
     ANN["/holistic/annotated_image<br/>(sensor_msgs/Image)<br/>(Landmarkを描き込んだ画像（BGR）)"]
     LM["/holistic/pose_landmarks<br/>(std_msgs/Float32MultiArray)(2Dランドマーク列)"]
+    CSV["/holistic/pose/landmarks/csv<br/>(mediapipe_ros2_msgs/PoseLandmark)(CSV用ランドマーク列)"]
   end
 
   NODE --> ANN
   NODE --> LM
+  NODE --> CSV
 ```
 
 ## 🛠️ Setup
@@ -45,24 +47,32 @@ Please follow link
 [ros2_astra_camera](https://github.com/orbbec/ros2_astra_camera.git)
 
 ### Installing dependent packages
-Install python packages
+#### Install python packages
 ```bash
 pip3 install -U "numpy==1.26.4" "opencv-python==4.10.0.84"
 pip3 install opencv-python mediapipe
 ```
-Install ros packages
+#### Install ros packages
 ```bash
 sudo apt install ros-humble-cv-bridge
 sudo apt install ros-humble-image-transport
 sudo apt install ros-humble-message-filters
 ```
 ### Setup mediapipe_ros2 Repositories
-Clone
+#### Clone
 ```bash
 cd ~/ros2_ws/src
 git clone https://github.com/iHaruruki/mediapipe_ros2.git
+git clone https://github.com/iHaruruki/mediapipe_ros2_msgs.git
 ```
-Build
+#### Build
+First, build the message definition package.
+```bash
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select mediapipe_ros2_msgs
+source install/setup.bash
+```
+Second, build the `mediapipe_ros2` package.
 ```bash
 cd ~/ros2_ws
 colcon build --symlink-install --packages-select mediapipe_ros2
@@ -84,10 +94,6 @@ ros2 launch orbbec_camera astra_stereo_u3.launch.py
 > [Astra Pro](https://github.com/iHaruruki/ros2_astra_camera.git)  
 > [Astra Stereo S U3](https://github.com/iHaruruki/OrbbecSDK_ROS2.git)  
 
-### Run face_mesh_node (face landmarks only)
-```bash
-ros2 run mediapipe_ros2 face_mesh_node
-```
 ### Run Holistic node (human pose, face landmarks, hand tracking)
 #### Launch `holistic_pose_node` & `rviz`
 ```bash
@@ -96,19 +102,23 @@ ros2 launch mediapipe_ros2 posture.launch.py
 #### ros2 topic echo / topicが公開しているデータを表示
 ```bash
 # ros2 topic echo [topic name]
-ros2 topic echo /holistic/pose_landmarks
+ros2 topic echo /holistic/pose_landmarks/csv
 ```
 #### Output to csv file / CSVファイルに出力
-```bash
-# ros2 topic echo [topic name] > [file name].csv
-ros2 topic echo /holistic/pose_landmarks > output.csv
-```
-#### Subscribe topic(/holistic/pose_landmarks)
-This is a sample node that subscribes to the `/holistic/pose_landmarks`  
-骨格のランドマークを購読するサンプルプログラムです
+`~/landmark_data.csv`にCSVファイルが生成される
 ```bash
 ros2 run mediapipe_ros2 subscribe_landmark_node
 ```
+csv format
+```
+stamp_sec,stamp_nanosec,frame_id,landmark_name,index,x_px,y_px
+```
+| stamp_sec | stamp_nanosec | frame_id | landmark_name | index | x_px | y_px |
+| --- | --- | --- | --- | --- | --- | --- |
+| ROS Header.stamp.sec（秒）| ROS Header.stamp.nanosec（ナノ秒）| ROS Header.frame_id（座標系。例: camera_color_optical_frame）| ランドマーク名（例: left_thumb, right_ankle）| ランドマークのインデックス（MediaPipe Poseの0..32）| 画像のフル座標系におけるピクセルx（左→右）| 画像のフル座標系におけるピクセルy（上→下）|
+
+### ROS 2 package create / ROS 2 パッケージ作成の方法
+[Creating a package](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Creating-Your-First-ROS2-Package.html)
 
 ## 👤 Authors
 

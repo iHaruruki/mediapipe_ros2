@@ -13,8 +13,8 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='mediapipe_ros2',
-            executable='holistic_pose_node',
-            name='holistic_pose_node',
+            executable='holistic_pose_csv_node',
+            name='holistic_pose_csv_node',
             output='screen'
         ),
         Node(

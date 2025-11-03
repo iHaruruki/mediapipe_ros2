@@ -73,6 +73,12 @@ class HolisticPoseTFNode(Node):
         self.declare_parameter('publish_pose_tf', True)
         self.declare_parameter('tf_rate_hz', 30.0)
 
+        # しきい値（未検出/不確かはTF送らない）
+        self.declare_parameter('visibility_threshold', 0.6)  # 0.0〜1.0
+        self.declare_parameter('presence_threshold',  0.0)   # 0.0〜1.0
+        self.declare_parameter('min_depth_m', 0.1)          # 無効扱いの最小距離[m]
+        self.declare_parameter('max_depth_m', 8.0)          # 無効扱いの最大距離[m]
+
         # ==== Read params ====
         min_det = float(self.get_parameter('min_detection_confidence').value)
         min_trk = float(self.get_parameter('min_tracking_confidence').value)
@@ -95,6 +101,11 @@ class HolisticPoseTFNode(Node):
 
         self.publish_pose_tf = bool(self.get_parameter('publish_pose_tf').value)
         self.tf_rate_hz = float(self.get_parameter('tf_rate_hz').value)
+
+        self.visibility_thr = float(self.get_parameter('visibility_threshold').value)
+        self.presence_thr   = float(self.get_parameter('presence_threshold').value)
+        self.min_depth_m    = float(self.get_parameter('min_depth_m').value)
+        self.max_depth_m    = float(self.get_parameter('max_depth_m').value)
 
         # ==== MediaPipe Holistic（pose中心）====
         self.holistic = self.mp_holistic.Holistic(
@@ -192,14 +203,14 @@ class HolisticPoseTFNode(Node):
             self.get_logger().error(f'depth cv bridge error: {e}')
             return
 
-        annotated_image, pose_lm_flat, _ = self.process_image(color)
+        annotated_image, (pose_lm_flat, vis_list, pres_list), _ = self.process_image(color)
 
         # Publish annotated image
         ann = self.bridge.cv2_to_imgmsg(annotated_image, "bgr8")
         ann.header = color_msg.header
         self.annotated_pub.publish(ann)
 
-        # Publish 2D pose landmarks
+        # Publish 2D pose landmarks（可視化やログ用）
         self._publish_array(self.pose_landmarks_pub, pose_lm_flat)
 
         # === TF配信（既定ON） ===
@@ -211,7 +222,8 @@ class HolisticPoseTFNode(Node):
             if (now - self.last_tf_time).nanoseconds >= (1e9 / self.tf_rate_hz):
                 self.last_tf_time = now
                 self._broadcast_landmarks_tf(
-                    pose_lm_flat, depth_m, fx, fy, cx, cy, color_msg
+                    pose_lm_flat, vis_list, pres_list,
+                    depth_m, fx, fy, cx, cy, color_msg
                 )
 
         # ROIウィンドウ
@@ -260,9 +272,19 @@ class HolisticPoseTFNode(Node):
         VIS_TH = self.visibility_threshold
         h, w = depth_m.shape
         n = len(flat_xyz) // 3
+
         for i in range(n):
+            # 1) 可視度・存在度フィルタ
+            vvis = vis_list[i] if i < len(vis_list) else 0.0
+            vpres = pres_list[i] if i < len(pres_list) else 0.0
+            if vvis < self.visibility_thr or vpres < self.presence_thr:
+                continue
+
+            # 2) 画面外は送らない（※クリップしない）
             u = float(flat_xyz[3*i + 0])
             v = float(flat_xyz[3*i + 1])
+            if not (0.0 <= u < float(W) and 0.0 <= v < float(H)):
+                continue
 
             if not (0.0 <= u < w and 0.0 <= v < h):
                 continue
@@ -293,7 +315,6 @@ class HolisticPoseTFNode(Node):
             t.header.frame_id = self.camera_frame
             name = POSE_NAMES[i] if i < len(POSE_NAMES) else f"landmark_{i}"
             t.child_frame_id = f'{self.child_prefix}/{name}'
-
             t.transform.translation.x = float(X)
             t.transform.translation.y = float(Y)
             t.transform.translation.z = float(z)
@@ -301,11 +322,10 @@ class HolisticPoseTFNode(Node):
             t.transform.rotation.y = 0.0
             t.transform.rotation.z = 0.0
             t.transform.rotation.w = 1.0
-
             self.tf_broadcaster.sendTransform(t)
 
     def process_image(self, cv_image):
-        """Holisticで全身ポーズのみ処理。描画＋フル画像座標へ復元した33点配列を返す。"""
+        """Holisticで全身ポーズのみ処理。描画＋(x,y,z)+vis/pres配列を返す。"""
         height, width = cv_image.shape[:2]
 
         # ROI crop
@@ -346,10 +366,12 @@ class HolisticPoseTFNode(Node):
         else:
             full_annotated = annotated
 
-        # 2Dランドマーク（x_pix, y_pix, z_mp）
-        pose_landmarks = self._extract_pose_landmarks(results, width, height, roi_offset, (roi_x, roi_y, roi_x2, roi_y2))
+        # 2Dランドマーク（x_pix, y_pix, z_mp）＋ visibility/presence
+        pose_landmarks, vis_list, pres_list = self._extract_pose_landmarks(
+            results, width, height, roi_offset, (roi_x, roi_y, roi_x2, roi_y2)
+        )
 
-        return full_annotated, pose_landmarks, (self.roi_x, self.roi_y, self.roi_width, self.roi_height, self.roi_enabled)
+        return full_annotated, (pose_landmarks, vis_list, pres_list), (self.roi_x, self.roi_y, self.roi_width, self.roi_height, self.roi_enabled)
 
     def _extract_pose_landmarks(self, results, width, height, roi_offset, roi_bbox):
         landmarks = []
