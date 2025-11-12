@@ -99,6 +99,19 @@ ros2 launch orbbec_camera astra_stereo_u3.launch.py
 ```bash
 ros2 launch mediapipe_ros2 posture.launch.py
 ```
+#### Use two cameras (run 2 nodes)
+You can run two instances of `holistic_pose_csv_node`, one per camera, with the provided dual launch.
+```bash
+# Example: camera drivers publish under /camera1 and /camera2
+ros2 launch mediapipe_ros2 posture_dual.launch.py cam1_ns:=camera1 cam2_ns:=camera2 \
+  out1_ns:=cam1 out2_ns:=cam2 \
+  frame1:=camera1_depth_optical_frame frame2:=camera2_depth_optical_frame
+```
+Notes:
+- Input topics are taken from `/<camX_ns>/color|depth/...`.
+- Output topics are remapped to `/<outX_ns>/holistic/...` to avoid collisions.
+- TF child frame IDs are prefixed by `<outX_ns>/landmark/...`, and the parent frame is set via `frameX`.
+
 #### ros2 topic echo / topicが公開しているデータを表示
 ```bash
 # ros2 topic echo [topic name]
