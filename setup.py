@@ -13,14 +13,15 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name), glob('launch/*launch.[pxy][yma]*')),
+         (os.path.join('share', package_name), glob('urdf/*')),
         (os.path.join('share', package_name, 'rviz'),   glob('rviz/*.rviz')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='robot',
-    maintainer_email='ryo.saegusa@syblab.org',
+    maintainer='Haruki Isono',
+    maintainer_email='haruki.isono861@gmail.com',
     description='TODO: Package description',
-    license='Apache-2.0',
+    license='MIT',
     extras_require={
         'test': [
             'pytest',
