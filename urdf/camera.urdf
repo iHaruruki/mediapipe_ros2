@@ -13,61 +13,13 @@
       <color rgba="0.5 0.5 0.5 1"/>
   </material>
 
+  <!-- Link & Joint -->
+ 
   <link name="map"/>
 
   <link name="base_link"/>
 
-  <joint name="map_base_joint" type="fixed">
-    <parent link="map"/>
-    <child link="base_link"/>
-  </joint>
-
-  <link name="pedestal_link">
-    <visual>
-      <geometry>
-        <box size="0.36 0.36 0.005"/>
-      </geometry>
-      <material name="black" />
-    </visual>
-  </link>
-
-  <joint name="base_pedestal_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="pedestal_link"/>
-    <origin xyz="0.0 0.0 0.067" rpy="0 0 0"/>
-  </joint>
-
-  <link name="vertical_bar_link">
-    <visual>
-      <geometry>
-        <box size="0.025 0.05 0.758"/>
-      </geometry>
-      <material name="black" />
-    </visual>
-  </link>
-
-  <joint name="pedestal_vertical_joint" type="fixed">
-    <parent link="pedestal_link"/>
-    <child link="vertical_bar_link"/>
-    <origin xyz="-0.1 0.0 0.379" rpy="0 0 0"/>
-  </joint>
-
-  <link name="horizontal_bar_link">
-    <visual>
-      <geometry>
-        <box size="0.025 0.05 0.48"/>
-      </geometry>
-      <material name="black" />
-    </visual>
-  </link>
-
-  <joint name="vertical_horizontal_joint" type="fixed">
-    <parent link="vertical_bar_link"/>
-    <child link="horizontal_bar_link"/>
-    <origin xyz="0.2 0.0 0.379" rpy="0 1.57 0"/>
-  </joint>
-
-  <!-- camera_01_link*Front Camera) -->
+  <!-- camera_01_link*Front Camera -->
   <link name="camera_01_link">
     <visual>
       <geometry>
@@ -83,20 +35,6 @@
     <origin xyz="0.16 0.0 -0.311" rpy="0 0 0"/>
   </joint>
 
-  <!-- camera_02_link(Top Camera) -->
-  <link name="camera_02_link">
-    <visual>
-      <geometry>
-        <box size="0.0123 0.0653 0.0225"/>
-      </geometry>
-      <material name="grey" />
-    </visual>
-  </link>
-
-  <joint name="camera_02_joint" type="fixed">
-    <parent link="horizontal_bar_link"/>
-    <child link="camera_02_link"/>
-    <origin xyz="0.025 0.0 0.2" rpy="-3.14 0 0"/>
-  </joint>
+  
 
 </robot>
